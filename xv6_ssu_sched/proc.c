@@ -335,35 +335,35 @@ scheduler(void)
     acquire(&ptable.lock);
 
 
-    // for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    //   for(np = ptable.proc; p < &ptable.proc[NPROC]; np++){
-    //     if(p->priority < np->priority){
-    //       if(p->state != RUNNABLE) continue;
-
-    //       c->proc = p;
-    //       switchuvm(p);
-    //       p->state = RUNNING;
-
-    //       swtch(&(c->scheduler), p->context);
-    //       switchkvm();
-
-    //       c->proc = 0;
-
-    //     }
-    //     else{
-    //       if(np->state != RUNNABLE) continue;
-    //       c->proc = np;
-    //       switchuvm(np);
-    //       np->state = RUNNING;
-
-    //       swtch(&(c->scheduler), np->context);
-    //       switchkvm();
-
-    //       c->proc = 0;
-    //     }
-    //   }
-    // }
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      for(np = ptable.proc; p < &ptable.proc[NPROC]; np++){
+         if(p->priority < np->priority){
+           if(p->state != RUNNABLE) continue;
+
+           c->proc = p;
+           switchuvm(p);
+           p->state = RUNNING;
+
+           swtch(&(c->scheduler), p->context);
+           switchkvm();
+
+           c->proc = 0;
+
+         }
+         else{
+           if(np->state != RUNNABLE) continue;
+           c->proc = np;
+           switchuvm(np);
+           np->state = RUNNING;
+
+           swtch(&(c->scheduler), np->context);
+           switchkvm();
+
+           c->proc = 0;
+         }
+       }
+     }
+    /*for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
 
@@ -380,7 +380,7 @@ scheduler(void)
       //Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
-    }
+    }*/
     release(&ptable.lock);
 
   }
