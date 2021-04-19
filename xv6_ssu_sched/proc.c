@@ -210,6 +210,9 @@ fork(void)
 
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
+  if(curproc->priority < np->priority)
+    return curproc->pid;
+
   pid = np->pid;
 
   acquire(&ptable.lock);
