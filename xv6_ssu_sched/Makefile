@@ -186,7 +186,8 @@ UPROGS=\
 	$U/_zombie\
 	$U/_ps\
 	$U/_test_nice\
-	$U/_test_sched\
+	$U/_test_sched1\
+	$U/_test_sched2\
 
 
 fs.img: mkfs README $(UPROGS)

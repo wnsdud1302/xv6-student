@@ -10,7 +10,7 @@ int main(int argc, char** argv){
     setnice(1,10);
 
     //change the priority of current processes.
-    setnice(getpid(), 2);
+    setnice(getpid(), 9);
 
     //create a child process
     pid = fork();
@@ -24,7 +24,7 @@ int main(int argc, char** argv){
         setnice(pid, 10);
         wait(); // Yield CPU
 
-        printf(1, "#### state 3 ####\n")
+        printf(1, "#### state 3 ####\n");
     }
 
     mypid = getpid();
