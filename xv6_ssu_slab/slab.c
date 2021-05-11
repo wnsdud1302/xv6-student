@@ -31,16 +31,16 @@ void slabinit(){
 	release(&stable.lock);
 }
 
-bool get_bit(int num, int i){
+bool get_bit(char num, int i){
 	return ((num & (1 << i)) != 0);
 }
 
-int set_bit(int num, int i){
+int set_bit(char num, int i){
 	return num | (i << i);
 }
 
-int clear_bit(int num, int i){
-	int mask = ~(1 << i);
+int clear_bit(char num, int i){
+	char mask = ~(1 << i);
 	return num & mask;
 }
 
@@ -63,7 +63,7 @@ char *kmalloc(int size){
 	alloc_size = 1 << count;
 
 	acquire(&stable.lock);
-	for(sl = &stable.slab; sl < &stable.slab[NSLAB]; sl ++){
+	for(sl = stable.slab; sl < &stable.slab[NSLAB]; sl ++){
 		if(sl->size == alloc_size){
 			if(sl->num_free_objects > 0){
 				if(sl->num_used_objects < sl->num_objects_per_page){
@@ -102,7 +102,7 @@ void kmfree(char *addr, int size){
     }
 	alloc_size = 1 << count;
 	acquire(&stable.lock);
-	for(struct slab *sl = &stable.slab; sl < &stable.slab[NSLAB]; sl++){
+	for(struct slab *sl = stable.slab; sl < &stable.slab[NSLAB]; sl++){
 		for(int i = 0; i < sl->num_pages; i++){
 			for(int j = 0; j < sl->num_objects_per_page; j++){
 				sl->num_used_objects--;
