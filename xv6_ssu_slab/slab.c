@@ -31,17 +31,17 @@ void slabinit(){
 	release(&stable.lock);
 }
 
-bool get_bit(char num, int i){
-	return ((num & (1 << i)) != 0);
+bool get_bit(char *num, int i){
+	return ((*num & (1 << i)) != 0);
 }
 
-int set_bit(char num, int i){
-	return num | (i << i);
+int set_bit(char *num, int i){
+	return *num | (i << i);
 }
 
-int clear_bit(char num, int i){
+int clear_bit(char *num, int i){
 	char mask = ~(1 << i);
-	return num & mask;
+	return *num & mask;
 }
 
 
@@ -92,7 +92,6 @@ char *kmalloc(int size){
 void kmfree(char *addr, int size){
 	int count = 0;
 	int alloc_size;
-	char *address;
     if(size && !(size & (size-1)))
         alloc_size = size;
 
@@ -105,19 +104,24 @@ void kmfree(char *addr, int size){
 	for(struct slab *sl = stable.slab; sl < &stable.slab[NSLAB]; sl++){
 		for(int i = 0; i < sl->num_pages; i++){
 			for(int j = 0; j < sl->num_objects_per_page; j++){
-				sl->num_used_objects--;
-				sl->num_free_objects++;
-				clear_bit(sl->bitmap, i *sl->num_pages * j);
-				if(sl->num_used_objects < (sl->num_pages - 1 + count) * sl->num_objects_per_page){
-					kfree(sl->page[sl->num_pages -1 + count]);
-					sl->num_free_objects = sl->num_objects_per_page;
-					count++;
-				}
+				if(addr == sl->page[i] + (sl->size * j)){	
+					if(sl->size == alloc_size){
+						sl->num_free_objects++;
+						sl->num_used_objects--;
+					}
+					clear_bit(sl->bitmap, i *sl->num_pages * j);
+					if(sl->num_used_objects < (sl->num_pages - 1 + count) * sl->num_objects_per_page){
+						kfree(sl->page[sl->num_pages -1 + count]);
+						sl->num_free_objects = sl->num_objects_per_page;
+						count++;
+					}
 				release(&stable.lock);
 				sl->num_pages += count;
 				return;
+				}
 			}
 		}
+		sl->num_pages += count;
 	}
 	release(&stable.lock);
 	return;
