@@ -31,38 +31,6 @@ void slabinit(){
 	release(&stable.lock);
 }
 
-bool get_bit(char* size, int i)
-{
-	char *tmp = size;
-	tmp += (i / 8);
-	i = i - (i / 8) * 8;
-	unsigned char cri = 0x80;
-	if((*(tmp + i) & (cri >> i)) != 0) return true; 
-	else return false;
-	
-}
-
-char* set_bit(char* size, int i)
-{
-	char *tmp = size;
-	tmp += (i / 8);
-	i = i - (i / 8) * 8;
-	unsigned char cri = 0x80;
-	*(tmp + i) = (*(tmp + i) | (cri >> i));
-	return tmp;
-}
-
-char* clear_bit(char* size, int i) {
-
-  	char *tmp = size;
-	tmp += (i / 8);
-	i = i - (i / 8) * 8;
-	unsigned char cri = 0x80;
-	*(tmp + i) = *(tmp + i) & ~(cri >> i);
-	return tmp;
-}
-
-
 
 char *kmalloc(int size){
 	if(size > 2048) return 0;
@@ -81,26 +49,18 @@ char *kmalloc(int size){
 	alloc_size = 1 << count;
 
 	acquire(&stable.lock);
-	for(sl = stable.slab; sl < &stable.slab[NSLAB]; sl ++){
+	for(sl = stable.slab; sl < &stable.slab[NSLAB]; sl++){
 		if(sl->size == alloc_size){
-			if(sl->num_free_objects > 0){
-				if(sl->num_used_objects < sl->num_objects_per_page){
-					for(int i = 0; i < sl->num_objects_per_page; i++){
-						if(!get_bit(sl->bitmap, i)){
-							sl->bitmap = set_bit(sl->bitmap, i);
-							address = sl->page[sl->num_pages-1] + i * sl->size;
-							sl->num_used_objects++;
-							sl->num_free_objects--;
-							break;
-						}
-					}
-				}
-			}
-			else{
+			if(sl->num_free_objects < 0){
 				sl->num_free_objects = sl->num_objects_per_page;
 				sl->num_pages++;
-				sl->page[sl->num_pages-1] = kalloc();
+				sl->page[sl->num_pages-1] = kalloc;
+				memset(sl->page[sl->num_pages-1], 0, 4096);
+
 			}
+			sl->num_free_objects--;
+			sl->num_used_objects++;
+			address = sl->page[sl->num_pages-1] + (sl->num_pages-1) * sl->size;
 		}
 	}
 	release(&stable.lock);
@@ -110,6 +70,7 @@ char *kmalloc(int size){
 void kmfree(char *addr, int size){
 	int count = 0;
 	int alloc_size;
+	char *address;
     if(size && !(size & (size-1)))
         alloc_size = size;
 
@@ -120,26 +81,14 @@ void kmfree(char *addr, int size){
 	alloc_size = 1 << count;
 	acquire(&stable.lock);
 	for(struct slab *sl = stable.slab; sl < &stable.slab[NSLAB]; sl++){
-		for(int i = 0; i < sl->num_pages; i++){
-			for(int j = 0; j < sl->num_objects_per_page; j++){
-				if(addr == sl->page[i] + (sl->size * j)){	
-					if(sl->size == alloc_size){
-						sl->num_free_objects++;
-						sl->num_used_objects--;
-					}
-					clear_bit(sl->bitmap, i *sl->num_pages * j);
-					if(sl->num_used_objects < (sl->num_pages - 1 + count) * sl->num_objects_per_page){
-						kfree(sl->page[sl->num_pages -1 + count]);
-						sl->num_free_objects = sl->num_objects_per_page;
-						count++;
-					}
-				release(&stable.lock);
-				sl->num_pages += count;
-				return;
-				}
-			}
+		if(sl->size == alloc_size){
+			sl->num_free_objects++;
+			sl->num_used_objects--;
 		}
-		sl->num_pages += count;
+		for(int i = 0; i < (sl->num_pages-1)*sl->num_objects_per_page + sl->num_objects_per_page-1; i++){
+			address = sl->bitmap + i;
+			if(addr == address) memset(sl->bitmap + i, 0 , 1);
+		}
 	}
 	release(&stable.lock);
 	return;
