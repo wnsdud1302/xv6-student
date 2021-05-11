@@ -36,12 +36,14 @@ bool get_bit(char *num, int i){
 }
 
 char *set_bit(char *num, int i){
-	return *num | (i << i);
+	char * temp = *num | (i <<i);
+	return temp;
 }
 
 char *clear_bit(char *num, int i){
 	char mask = ~(1 << i);
-	return *num & mask;
+	char *temp = *num & mask;
+	return temp;
 }
 
 
