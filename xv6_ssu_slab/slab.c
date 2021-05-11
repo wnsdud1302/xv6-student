@@ -31,19 +31,35 @@ void slabinit(){
 	release(&stable.lock);
 }
 
-bool get_bit(char *num, int i){
-	return ((*num & (1 << i)) != 0);
+bool get_bit(char* size, int i)
+{
+	char *tmp = size;
+	tmp += (i / 8);
+	i = i - (i / 8) * 8;
+	unsigned char cri = 0x80;
+	if((*(tmp + i) & (cri >> i)) != 0) return true; 
+	else return false;
+	
 }
 
-char *set_bit(char *num, int i){
-	char * temp = *num | (i <<i);
-	return temp;
+char* set_bit(char* size, int i)
+{
+	char *tmp = size;
+	tmp += (i / 8);
+	i = i - (i / 8) * 8;
+	unsigned char cri = 0x80;
+	*(tmp + i) = (*(tmp + i) | (cri >> i));
+	return tmp;
 }
 
-char *clear_bit(char *num, int i){
-	char mask = ~(1 << i);
-	char *temp = *num & mask;
-	return temp;
+char* clear_bit(char* size, int i) {
+
+  	char *tmp = size;
+	tmp += (i / 8);
+	i = i - (i / 8) * 8;
+	unsigned char cri = 0x80;
+	*(tmp + i) = *(tmp + i) & ~(cri >> i);
+	return tmp;
 }
 
 
