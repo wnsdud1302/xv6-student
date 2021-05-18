@@ -7,8 +7,7 @@
 #include "proc.h"
 #include "spinlock.h"
 
-
-#define DALLOC
+//#define DALLOC
 
 #ifdef DALLOC
 struct {
@@ -97,23 +96,17 @@ allocproc(void)
   char *sp;
 
   acquire(&ptable.lock);
-  p = (struct proc*) kmalloc(sizeof(struct proc));
-  memset(p, 0, sizeof(struct proc));
-  for (p= ptable.proc; p -> next != ptable.proc; p = p->next){
-	//p = (struct proc*) kmalloc(sizeof(struct proc));
-  	//cprintf("ptable.proc %p\n", &ptable.proc);
-  	if (p == 0 && p->state != UNUSED) {
-		release(&ptable.lock);
-		return 0;
-  	}else{
-      p->state = EMBRYO;
-      p->pid = nextpid++;
-      p->prev = ptable.proc;
-      p->next = ptable.proc->next;
-      ptable.proc->next = p;
-      p->next->prev = p;
-    }
-  }
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    if(p->state == UNUSED)
+      goto found;
+
+  release(&ptable.lock);
+  return 0;
+
+found:
+  p->state = EMBRYO;
+  p->pid = nextpid++;
 
   release(&ptable.lock);
 
@@ -174,9 +167,7 @@ userinit(void)
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
 
-  ptable.proc -> next = ptable.proc -> prev = p;
-  p -> next = p -> prev = ptable.proc;
-  p-> state = RUNNABLE;
+  p->state = RUNNABLE;
 
   release(&ptable.lock);
 }
@@ -242,10 +233,6 @@ fork(void)
 
   acquire(&ptable.lock);
 
-  ptable.proc -> next = curproc -> prev = np;
-  np-> next = curproc;
-  np->prev = ptable.proc;
-  np->pid = nextpid++;
   np->state = RUNNABLE;
 
   release(&ptable.lock);
