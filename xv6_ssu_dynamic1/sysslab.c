@@ -14,39 +14,23 @@
 int
 slabtest(void)
 {
-<<<<<<< HEAD
-	//cprintf("__slabtest__\n");
-=======
-	// cprintf("__slabtest__\n");
->>>>>>> 420def87860b956f9f1c06c310cfed5290139d3f
+	cprintf("__slabtest__\n");
 
 	int x=TEST_ALLOC_MIN_SIZE;
 	char* t[NTEST];
 	int i;
 
-<<<<<<< HEAD
-	//cprintf("Initial state ...\n");
+	cprintf("Initial state ...\n");
 	slabdump();
 
 	while (x <= TEST_ALLOC_MAX_SIZE) {
-		//cprintf("Allocate %dB memory ...\n", x-1);
-=======
-	// cprintf("Initial state ...\n");
-	slabdump();
-
-	while (x <= TEST_ALLOC_MAX_SIZE) {
-		// cprintf("Allocate %dB memory ...\n", x-1);
->>>>>>> 420def87860b956f9f1c06c310cfed5290139d3f
+		cprintf("Allocate %dB memory ...\n", x-1);
 		for(i=0;i<NTEST;i++){
 			t[i] = (char *)kmalloc(x-1);
 		}
 		slabdump();
 
-<<<<<<< HEAD
-		//cprintf("Free %dB memory ...\n", x-1);
-=======
-		// cprintf("Free %dB memory ...\n", x-1);
->>>>>>> 420def87860b956f9f1c06c310cfed5290139d3f
+		cprintf("Free %dB memory ...\n", x-1);
 		for(i=0;i<NTEST;i++){
 			kmfree((char*)t[i], x-1);
 		}
