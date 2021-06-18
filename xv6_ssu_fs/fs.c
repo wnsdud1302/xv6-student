@@ -409,15 +409,6 @@ bmap(struct inode *ip, uint bn)
       log_write(bp);
     }
     brelse(bp);
-
-    // bp = bread(ip->dev, addr);
-    // a = (uint*)bp->data;
-    // uint offset = bn % NINDIRECT;
-    // if((addr=a[offset]) == 0) {
-	  // a[offset] = addr = balloc(ip->dev);
-	  // log_write(bp);
-    // }
-    // brelse(bp);
     return addr;
   }
 
