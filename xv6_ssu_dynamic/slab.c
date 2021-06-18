@@ -54,7 +54,7 @@ char *kmalloc(int size){
 			if(sl->num_free_objects < 0){
 				sl->num_free_objects = sl->num_objects_per_page;
 				sl->num_pages++;
-				sl->page[sl->num_pages-1] = kalloc();
+				sl->page[sl->num_pages-1] = kalloc;
 				memset(sl->page[sl->num_pages-1], 0, 4096);
 
 			}
