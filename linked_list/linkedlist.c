@@ -86,7 +86,7 @@ long linked_list_put (long key, long value, linked_list_t* ll)
 		new_node->key = key;
 		new_node->value = value;
 		new_node->next = ll->list_head->next;
-		ll->list_head->next = new_node->next;
+		ll->list_head->next = new_node;
 		CAS(&(ll->list_head), ll->list_head->next, &new_node);
 		i++;
 #endif
