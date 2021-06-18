@@ -7,7 +7,8 @@
 #include "proc.h"
 #include "spinlock.h"
 
-//#define DALLOC
+
+#define DALLOC
 
 #ifdef DALLOC
 struct {
@@ -96,17 +97,23 @@ allocproc(void)
   char *sp;
 
   acquire(&ptable.lock);
-
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == UNUSED)
-      goto found;
-
-  release(&ptable.lock);
-  return 0;
-
-found:
-  p->state = EMBRYO;
-  p->pid = nextpid++;
+  p = (struct proc*) kmalloc(sizeof(struct proc));
+  memset(p, 0, sizeof(struct proc));
+  for (p= ptable.proc; p -> next != ptable.proc; p = p->next){
+	//p = (struct proc*) kmalloc(sizeof(struct proc));
+  	//cprintf("ptable.proc %p\n", &ptable.proc);
+  	if (p == 0 && p->state != UNUSED) {
+		release(&ptable.lock);
+		return 0;
+  	}else{
+      p->state = EMBRYO;
+      p->pid = nextpid++;
+      p->prev = ptable.proc;
+      p->next = ptable.proc->next;
+      ptable.proc->next = p;
+      p->next->prev = p;
+    }
+  }
 
   release(&ptable.lock);
 
@@ -167,7 +174,9 @@ userinit(void)
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
 
-  p->state = RUNNABLE;
+  ptable.proc -> next = ptable.proc -> prev = p;
+  p -> next = p -> prev = ptable.proc;
+  p-> state = RUNNABLE;
 
   release(&ptable.lock);
 }
@@ -233,6 +242,10 @@ fork(void)
 
   acquire(&ptable.lock);
 
+  ptable.proc -> next = curproc -> prev = np;
+  np-> next = curproc;
+  np->prev = ptable.proc;
+  np->pid = nextpid++;
   np->state = RUNNABLE;
 
   release(&ptable.lock);
@@ -272,7 +285,7 @@ exit(void)
   wakeup1(curproc->parent);
 
   // Pass abandoned children to init.
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+  for(p = ptable.proc; p -> next != ptable.proc; p = p->next){
     if(p->parent == curproc){
       p->parent = initproc;
       if(p->state == ZOMBIE)
@@ -299,7 +312,7 @@ wait(void)
   for(;;){
     // Scan through table looking for exited children.
     havekids = 0;
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    for(p = ptable.proc; p->next != ptable.proc; p = p->next){
       if(p->parent != curproc)
         continue;
       havekids = 1;
@@ -314,6 +327,9 @@ wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+        p->next->prev = p->prev;
+        p->prev->next = p->next;
+        p->prev = p->next = 0;
         release(&ptable.lock);
         return pid;
       }
@@ -351,7 +367,7 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    for(p = ptable.proc; p->next != ptable.proc; p->next){
       if(p->state != RUNNABLE)
         continue;
 
@@ -478,7 +494,7 @@ wakeup1(void *chan)
 {
   struct proc *p;
 
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  for(p=ptable.proc; p -> next != ptable.proc; p=p->next)
     if(p->state == SLEEPING && p->chan == chan)
       p->state = RUNNABLE;
 }
@@ -501,7 +517,7 @@ kill(int pid)
   struct proc *p;
 
   acquire(&ptable.lock);
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+  for(p=ptable.proc; p -> next != ptable.proc; p=p->next){
     if(p->pid == pid){
       p->killed = 1;
       // Wake process from sleep if necessary.
@@ -535,7 +551,7 @@ procdump(void)
   char *state;
   uint pc[10];
 
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+  for(p=ptable.proc; p -> next != ptable.proc; p=p->next){
     if(p->state == UNUSED)
       continue;
     if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
@@ -569,7 +585,7 @@ ps(void)
 
 	acquire(&ptable.lock);
 
-	for( p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+	for( p=ptable.proc; p -> next != ptable.proc; p=p->next)
 	{   
     	if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
 				state = states[p->state];

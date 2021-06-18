@@ -71,6 +71,7 @@ long linked_list_put (long key, long value, linked_list_t* ll)
 
 	int i = 0;
 	node_t *new_node = (node_t*)malloc(sizeof(node_t));
+	
 	while (i < 1000){
 #ifdef BLINKED_LIST
 		// lock 
@@ -79,7 +80,6 @@ long linked_list_put (long key, long value, linked_list_t* ll)
 		new_node->value = value;
 		new_node->next = ll->list_head->next;
 		ll->list_head->next = new_node;
-		i++;
 		// unlock
 		pthread_mutex_unlock(&ll->list_lock);
 #else 
@@ -87,7 +87,11 @@ long linked_list_put (long key, long value, linked_list_t* ll)
 		new_node->value = value;
 		new_node->next = ll->list_head->next;
 		ll->list_head->next = new_node;
+<<<<<<< HEAD
 		CAS(&(ll->list_head), ll->list_head->next, &new_node);
+=======
+		CAS(&(ll->list_head->next), ll->list_head->next, &new_node);
+>>>>>>> fa377fef1050d056251fb30ed6ac2c3814c9d228
 		i++;
 #endif
 	}

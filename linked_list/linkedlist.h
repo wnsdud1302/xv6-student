@@ -38,9 +38,10 @@ typedef struct node {
 
 typedef struct linked_list {
 	node_t* list_head;
-#ifdef BLINKED_LIST
+	#ifdef BLINKED_LIST
 	pthread_mutex_t list_lock;
-#endif
+	#endif
+
 } linked_list_t;
 
 
